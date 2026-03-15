@@ -31,4 +31,4 @@ jobs:
       run: echo "${{ secrets.GDRIVE_CREDENTIALS }}" > credentials.json
 
     - name: Run Python Scraper
-      run: python scraper.py
+  run: python youtube-view-scraper/Scraper.py
