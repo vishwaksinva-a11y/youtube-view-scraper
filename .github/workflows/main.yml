@@ -1,28 +1,30 @@
 name: Daily YouTube Scraper
 
 on:
-schedule:
-  # Runs at 08:00 UTC every day. You can change this time.
-  - cron: '0 8 * * *'
-# Allows you to run this workflow manually from the Actions tab
+# This part enables the "Run workflow" button
 workflow_dispatch:
+
+schedule:
+  # This part runs the script automatically every day at 08:00 UTC
+  - cron: '0 8 * * *'
 
 jobs:
 scrape:
   runs-on: ubuntu-latest
 
   steps:
-  - uses: actions/checkout@v4   # Updated to the latest version (v4) to resolve the Node.js warning
+  - name: Check out repository code
+    uses: actions/checkout@v4
 
   - name: Set up Python
-    uses: actions/setup-python@v5 # Updated to the latest version (v5)
+    uses: actions/setup-python@v5
     with:
       python-version: '3.9'
 
   - name: Set up Chrome
     uses: browser-actions/setup-chrome@latest
 
-  - name: Install dependencies
+  - name: Install Python dependencies
     run: |
       python -m pip install --upgrade pip
       pip install selenium gspread
@@ -30,9 +32,8 @@ scrape:
   - name: Create Google Credentials File from Secret
     run: echo "${{ secrets.GDRIVE_CREDENTIALS }}" > credentials.json
 
-  # --- THIS IS THE CORRECTED STEP ---
   - name: Run Python Scraper
-    # First, change the working directory to the folder where the script is located
+    # This changes the working directory to where the script is
     working-directory: ./youtube-view-scraper
-    # Now, run the script using its correct, case-sensitive name
+    # This runs the script with its correct, case-sensitive name
     run: python Scraper.py
