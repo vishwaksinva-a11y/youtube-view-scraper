@@ -37,7 +37,7 @@ def scrape_youtube_views(driver, url):
         print(f'Error on {url}: {e}')
         return None
 
-# Main Automation Logic
+# Main execution logic
 creds_json = os.environ.get('GCP_CREDENTIALS')
 if creds_json:
     creds_dict = json.loads(creds_json)
