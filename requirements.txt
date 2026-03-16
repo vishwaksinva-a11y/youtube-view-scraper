@@ -1,0 +1,1 @@
+selenium\nwebdriver-manager\ngspread\ngoogle-auth
