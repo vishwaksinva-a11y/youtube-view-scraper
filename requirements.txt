@@ -1,1 +1,4 @@
-selenium\nwebdriver-manager\ngspread\ngoogle-auth
+selenium
+webdriver-manager
+gspread
+google-auth
