@@ -2,8 +2,8 @@ name: Daily YouTube View Scrape (IST)
 
 on:
   schedule:
-    - cron: '30 18 * * *'  # 18:30 UTC is 00:00 IST
-  workflow_dispatch:      # Enable manual trigger
+    - cron: '30 18 * * *'
+  workflow_dispatch:
 
 jobs:
   scrape:
@@ -22,7 +22,7 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y google-chrome-stable
         python -m pip install --upgrade pip
-        pip install -r requirements.txt
+        pip install selenium gspread google-auth webdriver-manager
 
     - name: Run Scraper
       env:
