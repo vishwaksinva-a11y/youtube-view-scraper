@@ -18,13 +18,30 @@ def get_driver():
 def scrape_youtube_views(driver, url):
     try:
         driver.get(url)
-        time.sleep(15)
+        time.sleep(20) # Increased wait for full rendering
         yt_data = driver.execute_script("return JSON.stringify(window.ytInitialData);")
-        if not yt_data: return None
-        pattern = r'"viewCountText"\\s*:\\s*(?:\\{"simpleText"\\s*:\\s*)?"([\\d,]+)\\s*views"'
-        matches = re.findall(pattern, yt_data, re.IGNORECASE)
-        if matches:
-            return max([int(m.replace(",", "")) for m in matches])
+        src = driver.page_source
+        
+        # Try multiple patterns in both internal data and raw source
+        patterns = [
+            r'"viewCountText"\s*:\s*(?:\{"simpleText"\s*:\s*)?"([\d,]+)\s*views"', # Standard
+            r'"viewCountText"\\s*:\\s*(?:\\{"simpleText"\\s*:\\s*)?"([\\d,]+)\\s*views"', # Escaped
+            r'>([\d,]+)\s+views<', # HTML fallback
+            r'viewCount\\\":\\\"(\d+)\\\"' # JSON Raw fallback
+        ]
+
+        all_found = []
+        for p in patterns:
+            for text_to_search in [yt_data, src]:
+                if text_to_search:
+                    matches = re.findall(p, text_to_search, re.IGNORECASE)
+                    for m in matches:
+                        try:
+                            all_found.append(int(m.replace(',', '')))
+                        except: pass
+        
+        if all_found:
+            return max(all_found)
         return None
     except Exception as e:
         print(f'Error on {url}: {e}')
@@ -34,20 +51,15 @@ def run_automation():
     creds_json = os.environ.get('GCP_CREDENTIALS')
     if not creds_json: raise ValueError('GCP_CREDENTIALS not set')
     creds_dict = json.loads(creds_json)
-    
     print(f"DEBUG: Script is running as {creds_dict.get('client_email')}")
-
+    
     scopes = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive']
     creds = Credentials.from_service_account_info(creds_dict, scopes=scopes)
     gc = gspread.authorize(creds)
     
     sheet_id = "1SdheQ0MSi8n7mewLymk2CACIKzFJrI37gFo_Sm8_cHY"
-    try:
-        sh = gc.open_by_key(sheet_id)
-        worksheet = sh.get_worksheet(0)
-    except Exception as e:
-        print(f"CRITICAL ERROR: Failed to open spreadsheet. Details: {e}")
-        return
+    sh = gc.open_by_key(sheet_id)
+    worksheet = sh.get_worksheet(0)
 
     urls = [
         'https://www.youtube.com/@flipkart/about',
@@ -64,7 +76,9 @@ def run_automation():
             if views:
                 ts = datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
                 worksheet.append_row([ts, url, str(views)])
-                print(f'Updated {url}: {views}')
+                print(f'Successfully Updated {url}: {views}')
+            else:
+                print(f'FAILED to find data for {url}')
             time.sleep(5)
     finally:
         driver.quit()
