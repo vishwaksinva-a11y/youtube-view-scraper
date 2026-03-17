@@ -21,7 +21,7 @@ def scrape_youtube_views(driver, url):
         time.sleep(15)
         yt_data = driver.execute_script("return JSON.stringify(window.ytInitialData);")
         if not yt_data: return None
-        pattern = r'"viewCountText"\s*:\\s*(?:\\{"simpleText"\\s*:\\s*)?"([\\d,]+)\\s*views"'
+        pattern = r'"viewCountText"\\s*:\\s*(?:\\{"simpleText"\\s*:\\s*)?"([\\d,]+)\\s*views"'
         matches = re.findall(pattern, yt_data, re.IGNORECASE)
         if matches:
             return max([int(m.replace(',', '')) for m in matches])
@@ -31,7 +31,23 @@ def scrape_youtube_views(driver, url):
         return None
 
 def run_automation():
-    # Updated URL list
+    # 1. Load Credentials
+    creds_json = os.environ.get('GCP_CREDENTIALS')
+    if not creds_json: raise ValueError('GCP_CREDENTIALS not set')
+    creds_dict = json.loads(creds_json)
+    
+    # DEBUG: Confirm active account
+    print(f"DEBUG: Script is running as {creds_dict.get('client_email')}")
+
+    scopes = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive']
+    creds = Credentials.from_service_account_info(creds_dict, scopes=scopes)
+    gc = gspread.authorize(creds)
+    
+    # 2. Open Spreadsheet
+    sh = gc.open_by_key('1T0fc6EsGu_mQnKLucqNgb5wZkE0qDe2EQCrt1ZcxzcI')
+    worksheet = sh.get_worksheet(0)
+    
+    # 3. Target Handles
     urls = [
         'https://www.youtube.com/@flipkart/about',
         'https://www.youtube.com/@Meesho/about',
@@ -39,13 +55,7 @@ def run_automation():
         'https://www.youtube.com/@AmazonInOfficial/about',
         'https://www.youtube.com/@letsblinkit/about'
     ]
-    creds_json = os.environ.get('GCP_CREDENTIALS')
-    if not creds_json: raise ValueError('GCP_CREDENTIALS not set')
-    creds_dict = json.loads(creds_json)
-    creds = Credentials.from_service_account_info(creds_dict, scopes=['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive'])
-    gc = gspread.authorize(creds)
-    sh = gc.open_by_key('1T0fc6EsGu_mQnKLucqNgb5wZkE0qDe2EQCrt1ZcxzcI')
-    worksheet = sh.get_worksheet(0)
+
     driver = get_driver()
     try:
         for url in urls:
@@ -60,3 +70,4 @@ def run_automation():
 
 if __name__ == "__main__":
     run_automation()
+```",
