@@ -1,3 +1,4 @@
+```python
 import os, time, re, datetime, gspread, json
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
@@ -31,23 +32,19 @@ def scrape_youtube_views(driver, url):
         return None
 
 def run_automation():
-    # 1. Load Credentials
     creds_json = os.environ.get('GCP_CREDENTIALS')
     if not creds_json: raise ValueError('GCP_CREDENTIALS not set')
     creds_dict = json.loads(creds_json)
     
-    # DEBUG: Confirm active account
     print(f"DEBUG: Script is running as {creds_dict.get('client_email')}")
 
     scopes = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive']
     creds = Credentials.from_service_account_info(creds_dict, scopes=scopes)
     gc = gspread.authorize(creds)
     
-    # 2. Open Spreadsheet
     sh = gc.open_by_key('1T0fc6EsGu_mQnKLucqNgb5wZkE0qDe2EQCrt1ZcxzcI')
     worksheet = sh.get_worksheet(0)
     
-    # 3. Target Handles
     urls = [
         'https://www.youtube.com/@flipkart/about',
         'https://www.youtube.com/@Meesho/about',
@@ -70,4 +67,4 @@ def run_automation():
 
 if __name__ == "__main__":
     run_automation()
-```",
+```
